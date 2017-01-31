@@ -66,12 +66,6 @@ NSInteger const kPointLabelHeight = 20;
     if (!self.labelFontColor) {
         self.labelFontColor = [UIColor whiteColor];
     }
-    if (!self.labelXFont) {
-        self.labelXFont = self.labelFont;
-    }
-    if (!self.labelXFontColor) {
-        self.labelXFontColor = self.labelFontColor;
-    }
     if (!self.labelBackgroundColor) {
         self.labelBackgroundColor = [UIColor colorWithRed:0.1f green:0.1f blue:0.1f alpha:0.5f];
     }
@@ -94,7 +88,7 @@ NSInteger const kPointLabelHeight = 20;
     
     NSInteger xCoordOffset = (self.graphWidth / [_graphData count]) / 2;
     [_graphView setFrame:CGRectMake(0 - xCoordOffset, 0, self.graphWidth, self.frame.size.height)];
-            
+    
     NSMutableArray *pointsCenterLocations = [[NSMutableArray alloc] init];
     
     NSDictionary *graphRange = [self workOutRangeFromArray:_graphData];
@@ -108,6 +102,8 @@ NSInteger const kPointLabelHeight = 20;
         if (highest == 0) highest = 10; //arbitary number in case all numbers are 0
         range = highest * 2;
     }
+    
+    NSMutableArray * tempGraphPointsArray = [NSMutableArray new];
     
     CGPoint lastPoint = CGPointMake(0, 0);
     
@@ -124,16 +120,19 @@ NSInteger const kPointLabelHeight = 20;
         NSInteger offsetFromBottom = 10;
         float screenHeight = (self.frame.size.height - (offsets)) / (self.frame.size.height + offSetFromTop + offsetFromBottom);
         
+        JYGraphPoint * graphPoint = [_graphData objectAtIndex:counter - 1];
         CGPoint point = CGPointMake(xCoord,
-                                    self.frame.size.height - (([[_graphData objectAtIndex:counter - 1] integerValue] * 
-                                                               ((self.frame.size.height * screenHeight) / range)) - 
+                                    self.frame.size.height - (([graphPoint.number integerValue] *
+                                                               ((self.frame.size.height * screenHeight) / range)) -
                                                               (lowest * ((self.frame.size.height * screenHeight) / range ))+
                                                               offsetFromBottom));
+        graphPoint.point = point;
+        [tempGraphPointsArray addObject:graphPoint];
         
         [self createBackgroundVerticalBarWithXCoord:point withXAxisLabelIndex:counter-1];
         
         if (self.hideLabels == NO) {
-            [self createPointLabelForPoint:point withLabelText:[NSString stringWithFormat:@"%@",[_graphData objectAtIndex:counter - 1]]];
+            [self createPointLabelForPoint:point withLabelText:[NSString stringWithFormat:@"%@", graphPoint.number]];
         }
         
         if (self.useCurvedLine == NO) {
@@ -157,20 +156,25 @@ NSInteger const kPointLabelHeight = 20;
     
     // Now draw all the points
     if (self.hidePoints == NO) {
-        [self drawPointswithStrokeColour:_strokeColor
-                                 andFill:_pointFillColor
-                               fromArray:pointsCenterLocations];
+        [self drawPointsFromArray:[tempGraphPointsArray copy]];
     }
     
 }
 
 - (NSDictionary *)workOutRangeFromArray:(NSArray *)array
 {
-    array = [array sortedArrayUsingSelector:@selector(compare:)];
+    array = [array sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        JYGraphPoint * point1 = (JYGraphPoint *)obj1;
+        JYGraphPoint * point2 = (JYGraphPoint *)obj2;
+        
+        return (point1.number < point2.number) ? NSOrderedAscending : NSOrderedDescending;
+    }];
     
-    float lowest = [[array objectAtIndex:0] floatValue];
+    JYGraphPoint * firstPoint = array.firstObject;
+    float lowest = [firstPoint.number floatValue];
     
-    float highest = [[array objectAtIndex:[array count] - 1] floatValue];
+    JYGraphPoint * lastPoint = array.lastObject;
+    float highest = [lastPoint.number floatValue];
     
     float range = highest - lowest;
     
@@ -187,7 +191,7 @@ NSInteger const kPointLabelHeight = 20;
 - (void)createPointLabelForPoint:(CGPoint)point
                    withLabelText:(NSString *)string
 {
-    UILabel *tempLabel = [[UILabel alloc] initWithFrame:CGRectMake(point.x , point.y, 30, kPointLabelHeight)];
+    UILabel * tempLabel = [[UILabel alloc] initWithFrame:CGRectMake(point.x , point.y, 30, kPointLabelHeight)];
     tempLabel.textAlignment = NSTextAlignmentCenter;
     [tempLabel setTextColor:self.labelFontColor];
     [tempLabel setBackgroundColor:self.labelBackgroundColor];
@@ -211,11 +215,11 @@ NSInteger const kPointLabelHeight = 20;
     
     label.textAlignment = NSTextAlignmentCenter;
     
-    [label setTextColor:self.labelXFontColor];
+    [label setTextColor:self.labelFontColor];
     [label setBackgroundColor:self.barColor];
     [label setAdjustsFontSizeToFitWidth:YES];
     [label setMinimumScaleFactor:0.6];
-    [label setFont:self.labelXFont];
+    [label setFont:self.labelFont];
     [label setNumberOfLines:2];
     
     if (self.graphDataLabels) {
@@ -249,7 +253,7 @@ NSInteger const kPointLabelHeight = 20;
     
     lineShape.path = linePath;
     CGPathRelease(linePath);
-        
+    
     [_graphView.layer addSublayer:lineShape];
     
     lineShape = nil;
@@ -312,7 +316,7 @@ NSInteger const kPointLabelHeight = 20;
     shapeView.fillColor = [UIColor clearColor].CGColor;
     shapeView.lineWidth = self.strokeWidth;
     [shapeView setLineCap:kCALineCapRound];
-        
+    
     [self.graphView.layer addSublayer:shapeView];
 }
 
@@ -323,24 +327,12 @@ NSInteger const kPointLabelHeight = 20;
     return [value CGPointValue];
 }
 
-- (void)drawPointswithStrokeColour:(UIColor *)stroke
-                           andFill:(UIColor *)fill
-                         fromArray:(NSMutableArray *)pointsArray
+- (void)drawPointsFromArray:(NSArray *)array
 {
-    NSMutableArray *pointCenterLocations = pointsArray;
-    
-    for (int i = 0; i < [pointCenterLocations count]; i++) {
-        CGRect pointRect = CGRectMake(0, 0, 20, 20);
+    for (JYGraphPoint * point in array) {
         
-        JYGraphPoint *point = [[JYGraphPoint alloc] initWithFrame:pointRect];
-        
-        [point setStrokeColour:stroke];
-        [point setFillColour:fill];
-        
-        [point setCenter:[[pointCenterLocations objectAtIndex:i] CGPointValue]];
-        
-        [point setBackgroundColor:[UIColor clearColor]];
-        
+        point.hidden = point.pointHidden;
+        point.center = point.point;
         [_graphView addSubview:point];
     }
 }
