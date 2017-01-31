@@ -8,27 +8,49 @@
 
 #import "JYGraphPoint.h"
 
+
+@interface JYGraphPoint ()
+
+@property (nonatomic, strong) UIColor * strokeColor;
+@property (nonatomic, strong) UIColor * fillColor;
+
+@property (nonatomic, strong) NSNumber * number;
+
+@property (nonatomic, assign) BOOL pointHidden;
+
+@end
+
+
 @implementation JYGraphPoint
 
-@synthesize strokeColour, fillColour;
 
-- (id)initWithFrame:(CGRect)frame
+- (instancetype)initWithNumber:(NSNumber *)number
+                   strokeColor:(UIColor *)strokeColor
+                     fillColor:(UIColor *)fillColor
+                   pointHidden:(BOOL)pointHidden
 {
-    self = [super initWithFrame:frame];
+    self = [super initWithFrame:CGRectMake(0, 0, 16, 16)];
     if (self) {
-        // Initialization code
+        
+        self.strokeColor = strokeColor;
+        self.fillColor = fillColor;
+        
+        self.number = number;
+        
+        self.pointHidden = pointHidden;
     }
     return self;
 }
 
-- (void) drawRect:(CGRect)rect
+
+- (void)drawRect:(CGRect)rect
 {
     //// Color Declarations
-    UIColor* stroke = strokeColour;
-    UIColor* fill = fillColour;
+    UIColor * stroke = self.strokeColor;
+    UIColor * fill = self.fillColor;
     
     //// Oval 2 Drawing
-    UIBezierPath* oval2Path = [UIBezierPath bezierPathWithOvalInRect: CGRectMake(2, 2, 16, 16)];
+    UIBezierPath * oval2Path = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(2, 2, 12, 12)];
     [fill setFill];
     [oval2Path fill];
     [stroke setStroke];
