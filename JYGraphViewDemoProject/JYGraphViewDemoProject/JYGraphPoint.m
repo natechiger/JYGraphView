@@ -29,7 +29,7 @@
                      fillColor:(UIColor *)fillColor
                    pointHidden:(BOOL)pointHidden
 {
-    self = [super initWithFrame:CGRectMake(0, 0, 16, 16)];
+    self = [super initWithFrame:CGRectMake(0, 0, 20, 20)];
     if (self) {
         self.backgroundColor = [UIColor clearColor];
         
@@ -51,11 +51,11 @@
     UIColor * fill = self.fillColor;
     
     //// Oval 2 Drawing
-    UIBezierPath * oval2Path = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(2, 2, 12, 12)];
+    UIBezierPath * oval2Path = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(2.50, 2.50, 15, 15)];
     [fill setFill];
     [oval2Path fill];
     [stroke setStroke];
-    oval2Path.lineWidth = 2.5;
+    oval2Path.lineWidth = 3.0;
     [oval2Path stroke];
 }
 
