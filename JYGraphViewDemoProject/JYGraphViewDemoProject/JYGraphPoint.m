@@ -31,6 +31,7 @@
 {
     self = [super initWithFrame:CGRectMake(0, 0, 16, 16)];
     if (self) {
+        self.backgroundColor = [UIColor clearColor];
         
         self.strokeColor = strokeColor;
         self.fillColor = fillColor;
