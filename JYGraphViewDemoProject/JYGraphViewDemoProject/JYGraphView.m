@@ -89,7 +89,8 @@ NSInteger const kPointLabelHeight = 20;
     NSInteger xCoordOffset = (self.graphWidth / [_graphData count]) / 2;
     [_graphView setFrame:CGRectMake(0 - xCoordOffset, 0, self.graphWidth, self.frame.size.height)];
     
-    NSMutableArray *pointsCenterLocations = [[NSMutableArray alloc] init];
+    NSMutableArray *tempGraphPointsArray = [NSMutableArray new];
+    NSMutableArray *pointsCenterLocations = [NSMutableArray new];
     
     NSDictionary *graphRange = [self workOutRangeFromArray:_graphData];
     NSInteger range = [[graphRange objectForKey:@"range"] integerValue];
@@ -103,22 +104,20 @@ NSInteger const kPointLabelHeight = 20;
         range = highest * 2;
     }
     
-    NSMutableArray * tempGraphPointsArray = [NSMutableArray new];
-    
     CGPoint lastPoint = CGPointMake(0, 0);
+    
+    NSInteger offsets = kPointLabelHeight + kPointLabelOffsetFromPointCenter;
+    if (_hideLabels == NO && _graphDataLabels != nil) {
+        offsets += kBarLabelHeight;
+    }
+    
+    NSInteger offSetFromTop = 10;
+    NSInteger offsetFromBottom = 10;
+    float screenHeight = (self.frame.size.height - (offsets)) / (self.frame.size.height + offSetFromTop + offsetFromBottom);
     
     for (NSUInteger counter = 1; counter <= [_graphData count]; counter++) {
         
         NSInteger xCoord = (self.graphWidth / [_graphData count]) * counter;
-        
-        NSInteger offsets = kPointLabelHeight + kPointLabelOffsetFromPointCenter;
-        if (_hideLabels == NO && _graphDataLabels != nil) {
-            offsets += kBarLabelHeight;
-        }
-        
-        NSInteger offSetFromTop = 10;
-        NSInteger offsetFromBottom = 10;
-        float screenHeight = (self.frame.size.height - (offsets)) / (self.frame.size.height + offSetFromTop + offsetFromBottom);
         
         JYGraphPoint * graphPoint = [_graphData objectAtIndex:counter - 1];
         CGPoint point = CGPointMake(xCoord,
@@ -156,9 +155,8 @@ NSInteger const kPointLabelHeight = 20;
     
     // Now draw all the points
     if (self.hidePoints == NO) {
-        [self drawPointsFromArray:[tempGraphPointsArray copy]];
+        [self drawPointsFromArray:tempGraphPointsArray];
     }
-    
 }
 
 - (NSDictionary *)workOutRangeFromArray:(NSArray *)array
@@ -166,8 +164,7 @@ NSInteger const kPointLabelHeight = 20;
     array = [array sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
         JYGraphPoint * point1 = (JYGraphPoint *)obj1;
         JYGraphPoint * point2 = (JYGraphPoint *)obj2;
-        
-        return (point1.number < point2.number) ? NSOrderedAscending : NSOrderedDescending;
+        return (point1.number.integerValue < point2.number.integerValue) ? NSOrderedAscending : NSOrderedDescending;
     }];
     
     JYGraphPoint * firstPoint = array.firstObject;
@@ -327,10 +324,9 @@ NSInteger const kPointLabelHeight = 20;
     return [value CGPointValue];
 }
 
-- (void)drawPointsFromArray:(NSArray *)array
+- (void)drawPointsFromArray:(NSMutableArray *)array
 {
     for (JYGraphPoint * point in array) {
-        
         point.hidden = point.pointHidden;
         point.center = point.point;
         [_graphView addSubview:point];

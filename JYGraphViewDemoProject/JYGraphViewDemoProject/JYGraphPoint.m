@@ -44,6 +44,12 @@
 }
 
 
+- (NSString *)debugDescription
+{
+    return [NSString stringWithFormat:@"<JYGraphPoint: number: %@, hidden: %@, point: %@>", self.number, self.pointHidden ? @"y" : @"n", NSStringFromCGPoint(self.point)];
+}
+
+
 - (void)drawRect:(CGRect)rect
 {
     //// Color Declarations
